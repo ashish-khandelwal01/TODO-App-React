@@ -84,6 +84,15 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
     </View>
   );
 
+  const HeaderComponent = () => (
+    <View style={styles.headerContainer}>
+      <Text style={styles.header}>Todo List</Text>
+      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+        <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -91,18 +100,15 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
           data={[1, 2, 3, 4, 5]}
           keyExtractor={(item) => item.toString()}
           renderItem={renderPlaceholder}
-          ListHeaderComponent={
-            <View style={styles.headerContainer}>
-              <Text style={styles.header}>Todo List</Text>
-            </View>
-          }
+          ListHeaderComponent={<HeaderComponent />}
+          contentContainerStyle={styles.listContent}
         />
       ) : tasks.length === 0 ? (
-        <View style={styles.noTasks}>
-          <View style={styles.headerContainer}>
-            <Text style={styles.header}>Todo List</Text>
+        <View style={styles.container}>
+          <HeaderComponent />
+          <View style={styles.noTasks}>
+            <Text style={styles.noTasksText}>No tasks yet</Text>
           </View>
-          <Text style={styles.noTasksText}>No tasks yet</Text>
         </View>
       ) : (
         <FlatList
@@ -130,24 +136,19 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
               }}
             />
           }
-          ListHeaderComponent={
-            <View style={styles.headerContainer}>
-              <Text style={styles.header}>Todo List</Text>
-            </View>
-          }
+          ListHeaderComponent={<HeaderComponent />}
+          contentContainerStyle={styles.listContent}
         />
       )}
 
-      <TouchableOpacity
-        style={styles.addBtn}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={{ color: '#fff' }}>+ Add Task</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Text style={{ color: '#fff' }}>Logout</Text>
-      </TouchableOpacity>
+      <View style={styles.bottomContainer}>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.addBtnText}>+ Add Task</Text>
+        </TouchableOpacity>
+      </View>
 
       <TaskFormModal
         visible={modalVisible}
@@ -165,25 +166,87 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
 export default TodoScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 12, backgroundColor: '#f0f2f5' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f0f2f5' 
+  },
 
-  addBtn: {
+  // Header with logout button
+  headerContainer: {
+    flexDirection: 'row',
     backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 60, // Account for logout button width to keep title centered
   },
   logoutBtn: {
-    backgroundColor: '#dc3545',
-    padding: 12,
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Content area
+  listContent: {
+    paddingHorizontal: 12,
+    paddingBottom: 100, // Space for bottom button
+  },
+
+  // Bottom button area
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#f0f2f5',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingBottom: 20, // Extra padding for safe area
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: -2 },
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  addBtn: {
+    backgroundColor: '#28A745',
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  addBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 
   // Placeholder styles
@@ -207,36 +270,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
 
+  // No tasks state
   noTasks: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: 100, // Account for bottom button
   },
   noTasksText: {
-    fontSize: 16,
-    color: '#555',
-    marginTop: 12,
-  },
-
-  // Header styling
-  headerContainer: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-    textAlign: 'center',
+    fontSize: 18,
+    color: '#666',
+    fontWeight: '500',
   },
 });
