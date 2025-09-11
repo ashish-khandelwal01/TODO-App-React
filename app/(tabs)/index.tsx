@@ -4,8 +4,10 @@ import { useAuth } from '../_contexts/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
+import SecurityAnswerScreen from './screens/SecurityAnswerScreen';
+import ResetPasswordScreen from './screens/ResetPasswordScreen';
 import TodoScreen from './screens/TodoScreen';
-import SubTaskScreen from './screens/SubTaskScreen'; // Add this import
+import SubTaskScreen from './screens/SubTaskScreen';
 import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
 
 const Stack = createNativeStackNavigator();
@@ -37,15 +39,62 @@ const AppNavigator = () => {
             options={{ 
               headerShown: true,
               title: 'Subtasks',
-              headerTintColor: '#007AFF'
+              headerTintColor: '#007AFF',
+              headerStyle: {
+                backgroundColor: '#f0f2f5',
+              }
             }} 
           />
         </>
       ) : (
         <>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
+          <Stack.Screen 
+            name="Login" 
+            component={LoginScreen} 
+            options={{ headerShown: false }} 
+          />
+          <Stack.Screen 
+            name="Register" 
+            component={RegisterScreen} 
+            options={{ headerShown: false }} 
+          />
+          <Stack.Screen 
+            name="ForgotPassword" 
+            component={ForgotPasswordScreen} 
+            options={{ 
+              headerShown: true,
+              title: 'Reset Password',
+              headerTintColor: '#007AFF',
+              headerStyle: {
+                backgroundColor: '#f9f9f9',
+              }
+            }} 
+          />
+          <Stack.Screen 
+            name="SecurityAnswer" 
+            component={SecurityAnswerScreen} 
+            options={{ 
+              headerShown: true,
+              title: 'Security Question',
+              headerTintColor: '#007AFF',
+              headerStyle: {
+                backgroundColor: '#f9f9f9',
+              }
+            }} 
+          />
+          <Stack.Screen 
+            name="ResetPassword" 
+            component={ResetPasswordScreen} 
+            options={{ 
+              headerShown: true,
+              title: 'New Password',
+              headerTintColor: '#007AFF',
+              headerStyle: {
+                backgroundColor: '#f9f9f9',
+              },
+              headerBackVisible: false, // Prevent going back
+            }} 
+          />
         </>
       )}
     </Stack.Navigator>

@@ -5,8 +5,8 @@ import * as Haptics from 'expo-haptics';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, securityQuestion: string, securityAnswer: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (username:string, email: string, password: string, securityQuestion: string, securityAnswer: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   loading: boolean;
 }
@@ -28,9 +28,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     finally { setLoading(false); }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (username: string, password: string) => {
     try {
-      const res = await APIClient.login(email, password);
+      const res = await APIClient.login(username, password);
+      console.log('Login response:aaa', res);
       await AsyncStorage.setItem('token', res.token);
       await AsyncStorage.setItem('user', JSON.stringify(res.user));
       setUser(res.user);
@@ -42,9 +43,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, securityQuestion: string, securityAnswer: string) => {
+  const register = async (username:string, email: string, password: string, securityQuestion: string, securityAnswer: string) => {
     try {
-      const res = await APIClient.register(email, password, securityQuestion, securityAnswer);
+      const res = await APIClient.register(username, email, password, securityQuestion, securityAnswer);
       await AsyncStorage.setItem('token', res.token);
       await AsyncStorage.setItem('user', JSON.stringify(res.user));
       setUser(res.user);

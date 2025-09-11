@@ -40,9 +40,9 @@ const TaskFormModal: React.FC<Props> = ({ visible, onClose, onSave, initialData 
           <TextInput placeholder="Title" style={styles.input} value={title} onChangeText={setTitle} />
           <TextInput placeholder="Description" style={styles.input} value={description} onChangeText={setDescription} />
           <Picker selectedValue={priority} onValueChange={(v) => setPriority(v as any)} style={styles.picker}>
-            <Picker.Item label="Low" value="low" />
-            <Picker.Item label="Medium" value="medium" />
-            <Picker.Item label="High" value="high" />
+            <Picker.Item label="Low" value="1" />
+            <Picker.Item label="Medium" value="2" />
+            <Picker.Item label="High" value="3" />
           </Picker>
           <View style={styles.actions}>
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave}><Text style={{color:'#fff'}}>Save</Text></TouchableOpacity>

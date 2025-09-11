@@ -7,9 +7,11 @@ import {
   StyleSheet,
   RefreshControl,
 } from 'react-native';
-import APIClient, { Task } from '../../_api/APIClient';
+import APIClient, { Task, SuggestedTask } from '../../_api/APIClient';
 import TaskItem from '../components/TaskItem';
 import TaskFormModal from '../components/TaskFormModal';
+import SuggestedTasksModal from '../components/SuggestedTasksModal';
+import ImportExportModal from '../components/ImportExportModal';
 import { useAuth } from '../../_contexts/AuthContext';
 
 interface Props {
@@ -21,6 +23,8 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [suggestedModalVisible, setSuggestedModalVisible] = useState(false);
+  const [importExportModalVisible, setImportExportModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -45,12 +49,14 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   const handleSave = async (taskData: Partial<Task>) => {
     try {
       if (editingTask) {
+        console.log('Updating task:', editingTask.id, taskData);
         await APIClient.updateTask(editingTask.id, taskData);
       } else {
         await APIClient.createTask(
           taskData.title!,
-          taskData.description,
-          taskData.priority
+          taskData.priority,
+          taskData.parent_task_id,
+          taskData.depth
         );
       }
       fetchTasks();
@@ -77,6 +83,10 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const handleImportComplete = () => {
+    fetchTasks(); // Refresh tasks after import
+  };
+
   const renderPlaceholder = () => (
     <View style={styles.placeholder}>
       <View style={styles.placeholderTitle} />
@@ -87,9 +97,17 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   const HeaderComponent = () => (
     <View style={styles.headerContainer}>
       <Text style={styles.header}>Todo List</Text>
-      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+      <View style={styles.headerButtons}>
+        <TouchableOpacity 
+          style={styles.headerButton} 
+          onPress={() => setImportExportModalVisible(true)}
+        >
+          <Text style={styles.headerButtonText}>⚙️</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -108,6 +126,12 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
           <HeaderComponent />
           <View style={styles.noTasks}>
             <Text style={styles.noTasksText}>No tasks yet</Text>
+            <TouchableOpacity 
+              style={styles.suggestedButton}
+              onPress={() => setSuggestedModalVisible(true)}
+            >
+              <Text style={styles.suggestedButtonText}>💡 Get Suggestions</Text>
+            </TouchableOpacity>
           </View>
         </View>
       ) : (
@@ -142,12 +166,21 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
       )}
 
       <View style={styles.bottomContainer}>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.addBtnText}>+ Add Task</Text>
-        </TouchableOpacity>
+        <View style={styles.bottomButtons}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.suggestedBtn]}
+            onPress={() => setSuggestedModalVisible(true)}
+          >
+            <Text style={styles.actionBtnText}>💡 Suggestions</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.addBtn]}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.actionBtnText}>+ Add Task</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TaskFormModal
@@ -158,6 +191,21 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
         }}
         onSave={handleSave}
         initialData={editingTask}
+      />
+
+      <SuggestedTasksModal
+        visible={suggestedModalVisible}
+        onClose={() => {
+          setSuggestedModalVisible(false);
+          fetchTasks();
+        }}
+        onTaskSelected={() => {}} 
+      />
+
+      <ImportExportModal
+        visible={importExportModalVisible}
+        onClose={() => setImportExportModalVisible(false)}
+        onImportComplete={handleImportComplete}
       />
     </View>
   );
@@ -171,7 +219,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f2f5' 
   },
 
-  // Header with logout button
+  // Header with logout button and settings
   headerContainer: {
     flexDirection: 'row',
     backgroundColor: '#007AFF',
@@ -191,7 +239,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     flex: 1,
     textAlign: 'center',
-    marginRight: 60, // Account for logout button width to keep title centered
+    marginRight: 80, // Account for header buttons width
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  headerButtonText: {
+    fontSize: 16,
   },
   logoutBtn: {
     backgroundColor: '#FF6B6B',
@@ -213,7 +275,7 @@ const styles = StyleSheet.create({
   // Content area
   listContent: {
     paddingHorizontal: 12,
-    paddingBottom: 100, // Space for bottom button
+    paddingBottom: 100, // Space for bottom buttons
   },
 
   // Bottom button area
@@ -225,15 +287,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f2f5',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingBottom: 20, // Extra padding for safe area
+    paddingBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: -2 },
     shadowRadius: 5,
     elevation: 5,
   },
-  addBtn: {
-    backgroundColor: '#28A745',
+  bottomButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionBtn: {
+    flex: 1,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -243,7 +309,13 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
   },
-  addBtnText: {
+  addBtn: {
+    backgroundColor: '#28A745',
+  },
+  suggestedBtn: {
+    backgroundColor: '#FFC107',
+  },
+  actionBtnText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
@@ -275,11 +347,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 100, // Account for bottom button
+    paddingBottom: 100, // Account for bottom buttons
   },
   noTasksText: {
     fontSize: 18,
     color: '#666',
     fontWeight: '500',
+    marginBottom: 20,
+  },
+  suggestedButton: {
+    backgroundColor: '#FFC107',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  suggestedButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

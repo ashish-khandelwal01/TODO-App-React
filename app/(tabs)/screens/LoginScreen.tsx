@@ -14,6 +14,7 @@ const LoginScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     setError('');
     try {
       const res = await login(username, password);
+      console.log('Login response:', res);
       if (!res.success) setError(res.error || 'Login failed');
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
