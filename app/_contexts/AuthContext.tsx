@@ -31,7 +31,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string) => {
     try {
       const res = await APIClient.login(username, password);
-      console.log('Login response:aaa', res);
       await AsyncStorage.setItem('token', res.token);
       await AsyncStorage.setItem('user', JSON.stringify(res.user));
       setUser(res.user);
