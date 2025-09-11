@@ -49,7 +49,6 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   const handleSave = async (taskData: Partial<Task>) => {
     try {
       if (editingTask) {
-        console.log('Updating task:', editingTask.id, taskData);
         await APIClient.updateTask(editingTask.id, taskData);
       } else {
         await APIClient.createTask(
@@ -78,7 +77,7 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleTaskPress = (task: Task) => {
-    if (task.subtasks && task.subtasks.length > 0) {
+    if (task.subtask_count > 0) {
       navigation.navigate('SubTaskScreen', { task });
     }
   };

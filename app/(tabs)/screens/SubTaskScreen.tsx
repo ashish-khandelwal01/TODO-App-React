@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, FlatList, Text, StyleSheet } from 'react-native';
-import { Task } from '../../_api/APIClient';
+import React, { useState, useEffect } from 'react';
+import { View, FlatList, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import APIClient, { Task } from '../../_api/APIClient';
 import TaskItem from '../components/TaskItem';
+import TaskFormModal from '../components/TaskFormModal';
 
 interface Props {
   route: any;
@@ -9,30 +10,118 @@ interface Props {
 }
 
 const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { task } = route.params;
+  const { task: initialTask } = route.params;
+  console.log('Initial task received:', initialTask);
+  
+  const [task, setTask] = useState<Task>(initialTask);
+  const [subtasks, setSubtasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true); // Start with loading true
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
-  const handleTaskPress = (subtask: Task) => {
-    if (subtask.subtasks && subtask.subtasks.length > 0) {
-      navigation.push('SubTaskScreen', { task: subtask });
+  // Fetch subtasks from API
+  const fetchSubtasks = async () => {
+    try {
+      console.log('Fetching subtasks for task ID:', task.id);
+      setLoading(true);
+      
+      // Call the new subtasks endpoint
+      const response = await APIClient.getSubTasks(task.id);
+      
+      if (response.success) {
+        setSubtasks(response.subtasks || []);
+        console.log(`Loaded ${response.subtasks?.length || 0} subtasks for task ${task.id}`);
+      } else {
+        console.error('Failed to fetch subtasks:', response.error);
+        setSubtasks([]);
+      }
+    } catch (error) {
+      console.error('Error fetching subtasks:', error);
+      setSubtasks([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDelete = (taskId: number) => {
-    // In a real app, you'd want to call your API and then navigate back
-    // For now, just navigate back
-    console.log('Delete task:', taskId);
-    // You might want to implement this with a callback to parent or context update
+  // Fetch subtasks when component mounts
+  useEffect(() => {
+    fetchSubtasks();
+  }, [task.id]);
+
+  useEffect(() => {
+    // Set up navigation header
+    navigation.setOptions({
+      title: task.title,
+      headerBackTitle: 'Back'
+    });
+  }, [navigation, task.title]);
+
+  const handleTaskPress = (subtask: Task) => {
+    // Always navigate to subtask screen, let it handle loading its own subtasks
+    navigation.push('SubTaskScreen', { task: subtask });
+  };
+
+  const handleDelete = async (taskId: number) => {
+    try {
+      await APIClient.deleteTask(taskId);
+      await fetchSubtasks(); // Refresh subtasks
+    } catch (e) {
+      console.error('Error deleting task:', e);
+    }
+  };
+
+  const handleComplete = async (taskId: number) => {
+    try {
+      await APIClient.completeTask(taskId);
+      await fetchSubtasks(); // Refresh subtasks
+    } catch (e) {
+      console.error('Error completing task:', e);
+    }
   };
 
   const handleUpdate = (taskToUpdate: Task) => {
-    // In a real app, you'd want to open edit modal
-    console.log('Update task:', taskToUpdate);
+    setEditingTask(taskToUpdate);
+    setModalVisible(true);
   };
 
-  const handleComplete = (taskId: number) => {
-    // In a real app, you'd want to call your API
-    console.log('Complete task:', taskId);
+  const handleSave = async (taskData: Partial<Task>) => {
+    try {
+      if (editingTask) {
+        console.log('Updating subtask:', editingTask.id, taskData);
+        await APIClient.updateTask(editingTask.id, taskData);
+        await fetchSubtasks(); // Refresh subtasks
+        setModalVisible(false);
+        setEditingTask(undefined);
+      }
+    } catch (e) {
+      console.error('Error updating task:', e);
+    }
   };
+
+  const handleAddSubtask = () => {
+    // Navigate back to TodoScreen or show modal to add subtask
+    // You might want to implement this based on your app's flow
+    console.log('Add subtask to:', task.id);
+  };
+
+  // Show loading spinner while fetching subtasks
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.header}>{task.title}</Text>
+          {task.description && (
+            <Text style={styles.headerDesc}>{task.description}</Text>
+          )}
+        </View>
+        
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading subtasks...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -42,17 +131,17 @@ const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
         {task.description && (
           <Text style={styles.headerDesc}>{task.description}</Text>
         )}
-        {task.completion_percentage !== undefined && (
+        {subtasks.length > 0 && (
           <Text style={styles.progressText}>
-            Progress: {task.completion_percentage}% ({task.completed_subtask_count}/{task.subtask_count} completed)
+            Subtasks: {subtasks.filter(t => t.completed).length}/{subtasks.length} completed
           </Text>
         )}
       </View>
 
       {/* Subtasks list */}
-      {task.subtasks && task.subtasks.length > 0 ? (
+      {subtasks.length > 0 ? (
         <FlatList
-          data={task.subtasks}
+          data={subtasks}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TaskItem
@@ -65,12 +154,43 @@ const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
             />
           )}
           showsVerticalScrollIndicator={false}
+          refreshing={loading}
+          onRefresh={fetchSubtasks}
         />
       ) : (
         <View style={styles.noSubtasks}>
           <Text style={styles.noSubtasksText}>No subtasks</Text>
+          <TouchableOpacity 
+            style={styles.addSubtaskButton}
+            onPress={handleAddSubtask}
+          >
+            <Text style={styles.addSubtaskText}>+ Add Subtask</Text>
+          </TouchableOpacity>
         </View>
       )}
+
+      {/* Add subtask button for when there are existing subtasks */}
+      {subtasks.length > 0 && (
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={handleAddSubtask}
+          >
+            <Text style={styles.addButtonText}>+ Add Subtask</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Task Form Modal for editing */}
+      <TaskFormModal
+        visible={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          setEditingTask(undefined);
+        }}
+        onSave={handleSave}
+        initialData={editingTask}
+      />
     </View>
   );
 };
@@ -80,7 +200,6 @@ export default SubTaskScreen;
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    padding: 12, 
     backgroundColor: '#f0f2f5' 
   },
 
@@ -88,7 +207,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderRadius: 12,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -116,14 +234,68 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+
   noSubtasks: { 
     flex: 1, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    marginTop: 20 
+    paddingHorizontal: 16,
   },
   noSubtasksText: { 
     fontSize: 16, 
-    color: '#555' 
+    color: '#666',
+    marginBottom: 20,
+  },
+  addSubtaskButton: {
+    backgroundColor: '#28A745',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addSubtaskText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  bottomContainer: {
+    padding: 16,
+    backgroundColor: '#f0f2f5',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: -2 },
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  addButton: {
+    backgroundColor: '#28A745',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -49,8 +49,6 @@ class APIClient {
 
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-      console.log('API Request:', endpoint, config);
-      console.log('API Response Status:', response.status, response.statusText);
       
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -87,7 +85,6 @@ class APIClient {
       }
       
       const responseData = await response.json();
-      console.log('API Response Data:', responseData);
       return responseData;
     } catch (error: any) {
       console.log('API Request Error:', error);
@@ -115,6 +112,9 @@ class APIClient {
   // Task Management APIs
   static getTasks() {
     return this.request('/tasks');
+  }
+  static getSubTasks(taskId: number) {
+  return this.request(`/tasks/${taskId}/subtasks`);
   }
 
   static getTask(taskId: number) {

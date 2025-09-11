@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   btnText: {
-    fontSize: 12,
+    fontSize: 15,
     color: '#007AFF',
   },
   arrow: {
