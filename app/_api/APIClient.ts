@@ -116,6 +116,9 @@ class APIClient {
   static getTasks() {
     return this.request('/tasks');
   }
+  static getSubTasks(taskId: number) {
+    return this.request('/tasks/${taskId}/subtasks');
+  }
 
   static getTask(taskId: number) {
     return this.request(`/tasks/${taskId}`);
