@@ -11,18 +11,17 @@ interface Props {
 
 const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
   const { task: initialTask } = route.params;
-  console.log('Initial task received:', initialTask);
   
   const [task, setTask] = useState<Task>(initialTask);
   const [subtasks, setSubtasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true); // Start with loading true
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
 
   // Fetch subtasks from API
   const fetchSubtasks = async () => {
     try {
-      console.log('Fetching subtasks for task ID:', task.id);
       setLoading(true);
       
       // Call the new subtasks endpoint
@@ -30,7 +29,6 @@ const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
       
       if (response.success) {
         setSubtasks(response.subtasks || []);
-        console.log(`Loaded ${response.subtasks?.length || 0} subtasks for task ${task.id}`);
       } else {
         console.error('Failed to fetch subtasks:', response.error);
         setSubtasks([]);
@@ -81,27 +79,45 @@ const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const handleUpdate = (taskToUpdate: Task) => {
     setEditingTask(taskToUpdate);
+    setIsAddingSubtask(false); // This is for editing existing task
     setModalVisible(true);
   };
 
   const handleSave = async (taskData: Partial<Task>) => {
     try {
       if (editingTask) {
-        console.log('Updating subtask:', editingTask.id, taskData);
+        // Updating existing subtask
         await APIClient.updateTask(editingTask.id, taskData);
-        await fetchSubtasks(); // Refresh subtasks
-        setModalVisible(false);
-        setEditingTask(undefined);
+      } else if (isAddingSubtask) {
+        // Creating new subtask
+        const priorityMap: Record<number, 'low' | 'medium' | 'high'> = {
+          1: 'low',
+          2: 'medium',
+          3: 'high'
+        };
+        const stringPriority = priorityMap[taskData.priority as number] || 'low';
+        
+        await APIClient.createTask(
+          taskData.title!,
+          stringPriority,
+          task.id, // parent_task_id is the current task
+          (task.depth || 0) + 1 // increment depth
+        );
       }
+      
+      await fetchSubtasks(); // Refresh subtasks
+      setModalVisible(false);
+      setEditingTask(undefined);
+      setIsAddingSubtask(false);
     } catch (e) {
-      console.error('Error updating task:', e);
+      console.error('Error saving task:', e);
     }
   };
 
   const handleAddSubtask = () => {
-    // Navigate back to TodoScreen or show modal to add subtask
-    // You might want to implement this based on your app's flow
-    console.log('Add subtask to:', task.id);
+    setEditingTask(undefined); // Clear any existing editing task
+    setIsAddingSubtask(true); // Set flag to indicate we're adding a subtask
+    setModalVisible(true); // Show the modal
   };
 
   // Show loading spinner while fetching subtasks
@@ -156,6 +172,7 @@ const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
           showsVerticalScrollIndicator={false}
           refreshing={loading}
           onRefresh={fetchSubtasks}
+          contentContainerStyle={styles.listContent}
         />
       ) : (
         <View style={styles.noSubtasks}>
@@ -181,15 +198,18 @@ const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
       )}
 
-      {/* Task Form Modal for editing */}
+      {/* Task Form Modal for editing and adding subtasks */}
       <TaskFormModal
         visible={modalVisible}
         onClose={() => {
           setModalVisible(false);
           setEditingTask(undefined);
+          setIsAddingSubtask(false);
         }}
         onSave={handleSave}
         initialData={editingTask}
+        isSubtask={isAddingSubtask}
+        parentTask={isAddingSubtask ? task : undefined}
       />
     </View>
   );
@@ -245,6 +265,11 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 
+  listContent: {
+    paddingHorizontal: 12,
+    paddingBottom: 100, // Space for bottom button
+  },
+
   noSubtasks: { 
     flex: 1, 
     justifyContent: 'center', 
@@ -274,6 +299,10 @@ const styles = StyleSheet.create({
   },
 
   bottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: 16,
     backgroundColor: '#f0f2f5',
     shadowColor: '#000',
