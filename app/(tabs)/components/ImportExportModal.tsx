@@ -51,22 +51,35 @@ const ImportExportModal: React.FC<Props> = ({ visible, onClose, onImportComplete
   const handleImportFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'text/*',
+        type: ['text/*', 'application/json'],
         copyToCacheDirectory: true,
       });
 
       if (result.type === 'success') {
         setLoading(true);
-        const content = await FileSystem.readAsStringAsync(result.uri);
-        
         try {
-          await APIClient.importMarkdown(content);
+          const content = await FileSystem.readAsStringAsync(result.uri);
+          
+          // Determine if it's JSON or markdown based on file extension or content
+          const isJson = result.name?.toLowerCase().endsWith('.json') || 
+                        (content.trim().startsWith('{') || content.trim().startsWith('['));
+          
+          if (isJson) {
+            // Handle JSON import
+            const jsonData = JSON.parse(content);
+            // Assuming the API can handle JSON format as well
+            await APIClient.importTasks(jsonData);
+          } else {
+            // Handle markdown import
+            await APIClient.importMarkdown(content);
+          }
+          
           Alert.alert('Success', 'File imported successfully!');
           onImportComplete();
           onClose();
-        } catch (error) {
-          console.error('Import error:', error);
-          Alert.alert('Error', 'Failed to import file. Please check the format.');
+        } catch (parseError) {
+          console.error('Parse error:', parseError);
+          Alert.alert('Error', 'Failed to parse file content. Please check the format.');
         } finally {
           setLoading(false);
         }
@@ -78,53 +91,50 @@ const ImportExportModal: React.FC<Props> = ({ visible, onClose, onImportComplete
   };
 
   const handleExport = async () => {
-    setLoading(true);
-    try {
-      const response = await APIClient.exportTasks(exportFormat);
-      
-      let content = '';
-      let filename = '';
-      let mimeType = '';
+  if (exportFormat !== 'markdown') {
+    Alert.alert('Not Implemented', `${exportFormat.toUpperCase()} export is not available yet.`);
+    return;
+  }
 
-      switch (exportFormat) {
-        case 'json':
-          content = JSON.stringify(response.tasks, null, 2);
-          filename = 'tasks.json';
-          mimeType = 'application/json';
-          break;
-        case 'markdown':
-          content = response.markdown || '';
-          filename = 'tasks.md';
-          mimeType = 'text/markdown';
-          break;
-        case 'csv':
-          content = response.csv || '';
-          filename = 'tasks.csv';
-          mimeType = 'text/csv';
-          break;
-      }
+  setLoading(true);
+  try {
+    const response = await APIClient.exportTasks();
 
-      // Save to file system and share
-      const fileUri = `${FileSystem.documentDirectory}${filename}`;
-      await FileSystem.writeAsStringAsync(fileUri, content);
+    const content = response.content || '';
+    const filename = response.filename || `tasks_${new Date().toISOString().split('T')[0]}.md`;
+    const mimeType = response.content_type || 'text/markdown';
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri);
-      } else {
-        Alert.alert('Success', `Tasks exported to ${filename}`);
-      }
-
-      onClose();
-    } catch (error) {
-      console.error('Export error:', error);
-      Alert.alert('Error', 'Failed to export tasks');
-    } finally {
-      setLoading(false);
+    if (!content.trim()) {
+      Alert.alert('Error', 'No content received from server. Please try again.');
+      return;
     }
-  };
+
+    // Save to file system and share
+    const fileUri = `${FileSystem.documentDirectory}${filename}`;
+    await FileSystem.writeAsStringAsync(fileUri, content);
+
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (isAvailable) {
+      await Sharing.shareAsync(fileUri, {
+        mimeType,
+        dialogTitle: `Export Tasks as ${exportFormat.toUpperCase()}`,
+      });
+    } else {
+      Alert.alert('Success', `Tasks exported to ${filename}\n\nFile saved to device storage.`);
+    }
+
+    onClose();
+  } catch (error: any) {
+    console.error('Export error:', error);
+    Alert.alert('Export Error', error.message || 'Failed to export tasks. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const renderImportTab = () => (
-    <ScrollView style={styles.tabContent}>
+    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.sectionTitle}>Import from Markdown</Text>
       <Text style={styles.helpText}>
         Paste your markdown content below. Use # for tasks and ## for subtasks.
@@ -137,15 +147,16 @@ const ImportExportModal: React.FC<Props> = ({ visible, onClose, onImportComplete
         value={markdownText}
         onChangeText={setMarkdownText}
         textAlignVertical="top"
+        placeholderTextColor="#999"
       />
 
       <TouchableOpacity 
-        style={styles.actionButton}
+        style={[styles.actionButton, loading && styles.disabledButton]}
         onPress={handleImportMarkdown}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color="#fff" size="small" />
         ) : (
           <Text style={styles.actionButtonText}>Import from Text</Text>
         )}
@@ -154,64 +165,83 @@ const ImportExportModal: React.FC<Props> = ({ visible, onClose, onImportComplete
       <Text style={styles.orText}>OR</Text>
 
       <TouchableOpacity 
-        style={[styles.actionButton, styles.secondaryButton]}
+        style={[styles.actionButton, styles.secondaryButton, loading && styles.disabledSecondaryButton]}
         onPress={handleImportFile}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#007AFF" />
+          <ActivityIndicator color="#007AFF" size="small" />
         ) : (
           <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>
-            Import from File
+            📁 Import from File
           </Text>
         )}
       </TouchableOpacity>
+
+      <Text style={styles.supportedFormats}>
+        Supported formats: .md, .txt, .json
+      </Text>
     </ScrollView>
   );
 
   const renderExportTab = () => (
-    <View style={styles.tabContent}>
+    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.sectionTitle}>Export Tasks</Text>
       <Text style={styles.helpText}>
         Choose a format to export your tasks:
       </Text>
 
       <View style={styles.formatOptions}>
-        {['json', 'markdown', 'csv'].map((format) => (
+        {[
+          { key: 'json', label: 'JSON', desc: 'Machine readable' },
+          { key: 'markdown', label: 'Markdown', desc: 'Human readable' },
+          { key: 'csv', label: 'CSV', desc: 'Spreadsheet format' }
+        ].map((format) => (
           <TouchableOpacity
-            key={format}
+            key={format.key}
             style={[
               styles.formatOption,
-              exportFormat === format && styles.formatOptionActive
+              exportFormat === format.key && styles.formatOptionActive
             ]}
-            onPress={() => setExportFormat(format as any)}
+            onPress={() => setExportFormat(format.key as any)}
           >
             <Text style={[
               styles.formatOptionText,
-              exportFormat === format && styles.formatOptionTextActive
+              exportFormat === format.key && styles.formatOptionTextActive
             ]}>
-              {format.toUpperCase()}
+              {format.label}
+            </Text>
+            <Text style={[
+              styles.formatOptionDesc,
+              exportFormat === format.key && styles.formatOptionDescActive
+            ]}>
+              {format.desc}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <TouchableOpacity 
-        style={styles.actionButton}
+        style={[styles.actionButton, loading && styles.disabledButton]}
         onPress={handleExport}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color="#fff" size="small" />
         ) : (
           <Text style={styles.actionButtonText}>Export Tasks</Text>
         )}
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal 
+      visible={visible} 
+      transparent 
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
@@ -261,6 +291,11 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
     backgroundColor: '#fff',
     borderRadius: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
@@ -281,9 +316,11 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 15,
+    backgroundColor: '#f5f5f5',
   },
   closeButtonText: {
-    fontSize: 24,
+    fontSize: 20,
     color: '#666',
     fontWeight: 'bold',
   },
@@ -335,6 +372,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 15,
     backgroundColor: '#f8f9fa',
+    color: '#333',
   },
   actionButton: {
     backgroundColor: '#007AFF',
@@ -342,6 +380,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 10,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   actionButtonText: {
     color: '#fff',
@@ -356,35 +396,56 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: '#007AFF',
   },
+  disabledButton: {
+    backgroundColor: '#ccc',
+    opacity: 0.7,
+  },
+  disabledSecondaryButton: {
+    borderColor: '#ccc',
+  },
   orText: {
     textAlign: 'center',
     color: '#666',
     marginVertical: 10,
     fontSize: 14,
+    fontWeight: '500',
+  },
+  supportedFormats: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 12,
+    marginTop: 10,
+    fontStyle: 'italic',
   },
   formatOptions: {
-    flexDirection: 'row',
     marginBottom: 20,
   },
   formatOption: {
-    flex: 1,
-    padding: 10,
-    margin: 2,
-    borderRadius: 6,
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ddd',
-    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
   },
   formatOptionActive: {
     backgroundColor: '#007AFF',
     borderColor: '#007AFF',
   },
   formatOptionText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '600',
+    marginBottom: 2,
   },
   formatOptionTextActive: {
     color: '#fff',
+  },
+  formatOptionDesc: {
+    fontSize: 12,
+    color: '#666',
+  },
+  formatOptionDescActive: {
+    color: 'rgba(255,255,255,0.8)',
   },
 });
