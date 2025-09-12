@@ -16,15 +16,9 @@ const TaskFormModal: React.FC<Props> = ({ visible, onClose, onSave, initialData 
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
 
   useEffect(() => {
-    if (initialData) {
-      setTitle(initialData.title);
-      setDescription(initialData.description || '');
-      setPriority(initialData.priority);
-    } else {
-      setTitle('');
-      setDescription('');
-      setPriority('medium');
-    }
+    setTitle(initialData?.title ?? '');
+    setDescription(initialData?.description ?? '');
+    setPriority(initialData?.priority ?? 'medium');
   }, [initialData, visible]);
 
   const handleSave = () => {
@@ -37,16 +31,41 @@ const TaskFormModal: React.FC<Props> = ({ visible, onClose, onSave, initialData 
       <View style={styles.overlay}>
         <View style={styles.container}>
           <Text style={styles.heading}>{initialData ? 'Edit Task' : 'New Task'}</Text>
-          <TextInput placeholder="Title" style={styles.input} value={title} onChangeText={setTitle} />
-          <TextInput placeholder="Description" style={styles.input} value={description} onChangeText={setDescription} />
-          <Picker selectedValue={priority} onValueChange={(v) => setPriority(v as any)} style={styles.picker}>
-            <Picker.Item label="Low" value="1" />
-            <Picker.Item label="Medium" value="2" />
-            <Picker.Item label="High" value="3" />
+
+          <TextInput
+            placeholder="Title"
+            placeholderTextColor="#999"
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+          />
+
+          <TextInput
+            placeholder="Description"
+            placeholderTextColor="#999"
+            style={styles.input}
+            value={description}
+            onChangeText={setDescription}
+          />
+
+          <Picker
+            selectedValue={priority}
+            onValueChange={(v) => setPriority(v as 'low' | 'medium' | 'high')}
+            style={styles.picker}
+            dropdownIconColor="#000"
+          >
+            <Picker.Item label="Low" value="low" color="#000" />
+            <Picker.Item label="Medium" value="medium" color="#000" />
+            <Picker.Item label="High" value="high" color="#000" />
           </Picker>
+
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}><Text style={{color:'#fff'}}>Save</Text></TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}><Text>Cancel</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+              <Text style={{ color: '#fff' }}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+              <Text>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -57,12 +76,30 @@ const TaskFormModal: React.FC<Props> = ({ visible, onClose, onSave, initialData 
 export default TaskFormModal;
 
 const styles = StyleSheet.create({
-  overlay: { flex:1, backgroundColor:'rgba(0,0,0,0.5)', justifyContent:'center', alignItems:'center' },
-  container: { width:'90%', backgroundColor:'#fff', padding:20, borderRadius:12 },
-  heading: { fontSize:18, fontWeight:'700', marginBottom:12 },
-  input: { borderWidth:1, borderColor:'#ccc', padding:8, borderRadius:8, marginBottom:12 },
-  picker: { marginBottom:12 },
-  actions: { flexDirection:'row', justifyContent:'space-between' },
-  saveBtn: { backgroundColor:'#007AFF', padding:10, borderRadius:8 },
-  cancelBtn: { padding:10, borderRadius:8 }
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  container: {
+    width: '90%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+  },
+  heading: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 12,
+    color: '#000', // ensures text is visible in production
+    height: 40,
+  },
+  picker: { marginBottom: 12, height: 50, color: '#000' },
+  actions: { flexDirection: 'row', justifyContent: 'space-between' },
+  saveBtn: { backgroundColor: '#007AFF', padding: 10, borderRadius: 8 },
+  cancelBtn: { padding: 10, borderRadius: 8 },
 });

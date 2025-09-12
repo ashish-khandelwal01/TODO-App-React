@@ -12,7 +12,6 @@ const expoConfig = Constants.expoConfig as {
 // Determine if this is a production build
 const releaseChannel = expoConfig?.releaseChannel;
 const isProd = releaseChannel === 'production' || !__DEV__;
-console.log(`API Base URL: ${isProd ? 'Production' : 'Development'}`);
 export const API_BASE_URL = isProd
   ? expoConfig!.extra!.API_BASE_URL_PROD
   : expoConfig!.extra!.API_BASE_URL_DEV;
@@ -86,10 +85,6 @@ class APIClient {
     }
 
     try {
-      console.log(`[API] ${config.method || 'GET'} ${API_BASE_URL}${endpoint}`);
-      if (config.body) console.log(`[API Body]`, config.body);
-      console.log(`API Request: ${API_BASE_URL}`);
-
       const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
       const text = await response.text();
