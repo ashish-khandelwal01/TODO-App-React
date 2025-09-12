@@ -37,6 +37,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d8a717c4-2be7-4836-a05d-c33160b8885f"
+      }
+    },
+    "owner": "ashish_khandelwal01"
   }
 }
