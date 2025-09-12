@@ -9,10 +9,10 @@ const expoConfig = Constants.expoConfig as {
   };
 } | undefined;
 
+// Determine if this is a production build
 const releaseChannel = expoConfig?.releaseChannel;
-
-const isProd = releaseChannel === 'production';
-
+const isProd = releaseChannel === 'production' || !__DEV__;
+console.log(`API Base URL: ${isProd ? 'Production' : 'Development'}`);
 export const API_BASE_URL = isProd
   ? expoConfig!.extra!.API_BASE_URL_PROD
   : expoConfig!.extra!.API_BASE_URL_DEV;
