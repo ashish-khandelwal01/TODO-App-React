@@ -8,7 +8,8 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import APIClient, { Task, SuggestedTask } from '../../_api/APIClient';
+import { LinearGradient } from 'expo-linear-gradient';
+import APIClient, { Task } from '../../_api/APIClient';
 import TaskItem from '../components/TaskItem';
 import TaskFormModal from '../components/TaskFormModal';
 import SuggestedTasksModal from '../components/SuggestedTasksModal';
@@ -32,7 +33,6 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   const fetchTasks = async () => {
     try {
       const response = await APIClient.getTasks();
-      // Filter to show only parent tasks (depth = 0 or is_subtask = false)
       const parentTasks = (response.tasks || []).filter(task => !task.is_subtask);
       setTasks(parentTasks);
     } catch (e) {
@@ -74,10 +74,7 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
       'Delete Task',
       'Are you sure you want to delete this task? This will also delete all subtasks.',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
@@ -112,25 +109,14 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleImportComplete = () => {
-    fetchTasks(); // Refresh tasks after import
+    fetchTasks();
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: logout,
-        },
-      ]
-    );
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Logout', style: 'destructive', onPress: logout },
+    ]);
   };
 
   const renderPlaceholder = () => (
@@ -141,26 +127,32 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   const HeaderComponent = () => (
-    <View style={styles.headerContainer}>
-      <Text style={styles.header}>Todo List</Text>
-      <View style={styles.headerButtons}>
-        <TouchableOpacity 
-          style={styles.headerButton} 
-          onPress={() => setImportExportModalVisible(true)}
-          accessibilityLabel="Import/Export settings"
-        >
-          <Text style={styles.headerButtonText}>⚙️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.logoutBtn} 
-          onPress={handleLogout}
-          accessibilityLabel="Logout"
-        >
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <LinearGradient
+      colors={['#007AFF', '#005BBB']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.headerContainer}
+    >
+    <TouchableOpacity
+      style={styles.iconBtn}
+      onPress={() => setImportExportModalVisible(true)}
+      accessibilityLabel="Import/Export tasks"
+    >
+      <Text style={styles.iconText}>Import/Export</Text>
+    </TouchableOpacity>
+
+    <Text style={styles.headerTitle}>Todo List</Text>
+
+    <TouchableOpacity
+      style={styles.logoutBtn}
+      onPress={handleLogout}
+      accessibilityLabel="Logout"
+    >
+      <Text style={styles.logoutText}>Logout</Text>
+    </TouchableOpacity>
+    </LinearGradient>
   );
+
 
   const EmptyListComponent = () => (
     <View style={styles.emptyContainer}>
@@ -169,13 +161,10 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
         Start organizing your day by creating your first task!
       </Text>
       <View style={styles.emptyActions}>
-        <TouchableOpacity 
-          style={styles.emptyButton}
-          onPress={() => setModalVisible(true)}
-        >
+        <TouchableOpacity style={styles.emptyButton} onPress={() => setModalVisible(true)}>
           <Text style={styles.emptyButtonText}>➕ Create Task</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.emptyButton, styles.emptyButtonSecondary]}
           onPress={() => setSuggestedModalVisible(true)}
         >
@@ -232,10 +221,7 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
         }
         ListHeaderComponent={<HeaderComponent />}
         ListEmptyComponent={<EmptyListComponent />}
-        contentContainerStyle={[
-          styles.listContent,
-          tasks.length === 0 && styles.listContentEmpty
-        ]}
+        contentContainerStyle={[styles.listContent, tasks.length === 0 && styles.listContentEmpty]}
         showsVerticalScrollIndicator={false}
       />
 
@@ -248,7 +234,7 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
           >
             <Text style={styles.actionBtnText}>💡 Suggestions</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.actionBtn, styles.addBtn]}
             onPress={() => setModalVisible(true)}
@@ -275,7 +261,7 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
           setSuggestedModalVisible(false);
           fetchTasks();
         }}
-        onTaskSelected={() => {}} 
+        onTaskSelected={() => {}}
       />
 
       <ImportExportModal
@@ -290,68 +276,59 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
 export default TodoScreen;
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#f0f2f5' 
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f2f5',
   },
 
-  // Header with logout button and settings
   headerContainer: {
     flexDirection: 'row',
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-    flex: 1,
-    textAlign: 'center',
-    marginRight: 80, // Account for header buttons width
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    marginRight: 8,
-  },
-  headerButtonText: {
-    fontSize: 16,
-  },
-  logoutBtn: {
-    backgroundColor: '#FF6B6B',
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
     shadowColor: '#000',
     shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 5,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
-  logoutText: {
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
     color: '#fff',
+    textAlign: 'center',
+    flex: 1,
+  },
+  iconBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  iconText: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#fff',
+  },
+  logoutBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
 
   // Content area
   listContent: {
     paddingHorizontal: 12,
-    paddingBottom: 100, // Space for bottom buttons
+    paddingBottom: 100,
   },
   listContentEmpty: {
     flex: 1,
@@ -363,7 +340,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
-    paddingBottom: 100, // Account for bottom buttons
+    paddingBottom: 100,
   },
   emptyTitle: {
     fontSize: 24,
@@ -408,7 +385,7 @@ const styles = StyleSheet.create({
     color: '#FFC107',
   },
 
-  // Bottom button area
+  // Bottom buttons
   bottomContainer: {
     position: 'absolute',
     bottom: 0,
@@ -451,7 +428,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Placeholder styles
+  // Placeholders
   placeholder: {
     backgroundColor: '#ddd',
     borderRadius: 10,
