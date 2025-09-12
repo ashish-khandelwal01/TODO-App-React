@@ -161,7 +161,7 @@ class APIClient {
 
   // Import/Export
   static importMarkdown(markdownContent: string) {
-    return this.request('/import_markdown', { method: 'POST', body: { markdown_content: markdownContent } });
+    return this.request('/import_markdown', { method: 'POST', body: { content: markdownContent } });
   }
 
   static exportTasks() {

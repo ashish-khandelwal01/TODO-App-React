@@ -55,35 +55,46 @@ const ImportExportModal: React.FC<Props> = ({ visible, onClose, onImportComplete
         copyToCacheDirectory: true,
       });
 
-      if (result.type === 'success') {
-        setLoading(true);
-        try {
-          const content = await FileSystem.readAsStringAsync(result.uri);
-          
-          // Determine if it's JSON or markdown based on file extension or content
-          const isJson = result.name?.toLowerCase().endsWith('.json') || 
-                        (content.trim().startsWith('{') || content.trim().startsWith('['));
-          
-          if (isJson) {
-            // Handle JSON import
-            const jsonData = JSON.parse(content);
-            // Assuming the API can handle JSON format as well
-            await APIClient.importTasks(jsonData);
-          } else {
-            // Handle markdown import
-            await APIClient.importMarkdown(content);
-          }
-          
-          Alert.alert('Success', 'File imported successfully!');
-          onImportComplete();
-          onClose();
-        } catch (parseError) {
-          console.error('Parse error:', parseError);
-          Alert.alert('Error', 'Failed to parse file content. Please check the format.');
-        } finally {
-          setLoading(false);
-        }
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        console.log('User cancelled file selection');
+        return;
       }
+      const file = result.assets[0];
+        if (!file.uri) {
+        Alert.alert('Error', 'Invalid file selected');
+        return;
+      }
+      setLoading(true);
+      try {
+        const content = await FileSystem.readAsStringAsync(file.uri);
+
+        if (!content || !content.trim()) {
+          Alert.alert('Error', 'File appears to be empty');
+          return;
+        }
+        const fileName = file.name?.toLowerCase() || '';
+        const isJson = fileName.endsWith('.json') || 
+                    (content.trim().startsWith('{') || content.trim().startsWith('['));
+        if (isJson) {
+          // Handle JSON import
+          const jsonData = JSON.parse(content);
+          // Assuming the API can handle JSON format as well
+          await APIClient.importTasks(jsonData);
+        } else {
+          // Handle markdown import
+          await APIClient.importMarkdown(content);
+        }
+        
+        Alert.alert('Success', 'File imported successfully!');
+        onImportComplete();
+        onClose();
+      } catch (parseError) {
+        console.error('Parse error:', parseError);
+        Alert.alert('Error', 'Failed to parse file content. Please check the format.');
+      } finally {
+        setLoading(false);
+      }
+      
     } catch (error) {
       console.error('File picker error:', error);
       Alert.alert('Error', 'Failed to pick file');
