@@ -1,6 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = 'http://192.168.2.53:5050/api/v1';
+const expoConfig = Constants.expoConfig as {
+  releaseChannel?: string;
+  extra?: {
+    API_BASE_URL_DEV?: string;
+    API_BASE_URL_PROD?: string;
+  };
+} | undefined;
+
+const releaseChannel = expoConfig?.releaseChannel;
+
+const isProd = releaseChannel === 'production';
+
+export const API_BASE_URL = isProd
+  ? expoConfig!.extra!.API_BASE_URL_PROD
+  : expoConfig!.extra!.API_BASE_URL_DEV;
 
 export interface User {
   id: number;
@@ -66,6 +81,8 @@ class APIClient {
     }
 
     try {
+      console.log(`API Request: ${API_BASE_URL}`);
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
       if (!response.ok) {
