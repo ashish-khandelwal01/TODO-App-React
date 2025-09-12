@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Android app with EAS (wait for completion)
         run: |
-          eas build --platform android --profile production --release-channel production --non-interactive --json --wait > build.json
+          eas build --platform android --profile production --non-interactive --json --wait > build.json
           BUILD_URL=$(jq -r '.[0].artifacts.buildUrl' build.json)
           echo "Build URL: $BUILD_URL"
           curl -L $BUILD_URL -o app.apk
