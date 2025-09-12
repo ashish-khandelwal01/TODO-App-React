@@ -40,3 +40,4 @@ app-example
 .idea
 .vscode
 expo-env.d.ts
+.env
