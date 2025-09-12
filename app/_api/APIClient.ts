@@ -17,6 +17,7 @@ export const API_BASE_URL = isProd
   ? expoConfig!.extra!.API_BASE_URL_PROD
   : expoConfig!.extra!.API_BASE_URL_DEV;
 
+
 export interface User {
   id: number;
   username: string;
@@ -49,6 +50,7 @@ export interface SuggestedTask {
 class APIClient {
   private static token: string | null = null;
 
+  /** Load token from AsyncStorage */
   private static async getToken(): Promise<string | null> {
     if (!this.token) {
       this.token = await AsyncStorage.getItem('token');
@@ -56,21 +58,24 @@ class APIClient {
     return this.token;
   }
 
-  static clearToken() {
-    this.token = null;
-  }
-
   static setToken(token: string) {
     this.token = token;
+    AsyncStorage.setItem('token', token).catch(console.warn);
   }
 
+  static clearToken() {
+    this.token = null;
+    AsyncStorage.removeItem('token').catch(console.warn);
+  }
+
+  /** Central request handler */
   static async request<T>(endpoint: string, options: any = {}): Promise<T> {
     const token = await this.getToken();
 
-    const config = {
+    const config: any = {
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
       ...options,
@@ -81,47 +86,49 @@ class APIClient {
     }
 
     try {
+      console.log(`[API] ${config.method || 'GET'} ${API_BASE_URL}${endpoint}`);
+      if (config.body) console.log(`[API Body]`, config.body);
       console.log(`API Request: ${API_BASE_URL}`);
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+
       if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          if (errorData.error) errorMessage = errorData.error;
-          else if (errorData.message) errorMessage = errorData.message;
-          else if (errorData.detail) errorMessage = errorData.detail;
-          else if (typeof errorData === 'string') errorMessage = errorData;
-        } catch {
-          const errorText = await response.text();
-          if (errorText.trim()) errorMessage = errorText;
-        }
-        throw new Error(errorMessage);
+        const errorMessage = data?.error || data?.message || data?.detail || response.statusText;
+        throw new Error(errorMessage || `HTTP ${response.status}`);
       }
 
-      return await response.json();
+      return data;
     } catch (error: any) {
-      if (error.message && !error.message.includes('Network request failed')) {
-        throw error;
-      }
-      throw new Error(error.message || 'Network error - please check your connection');
+      console.error(`[API ERROR] ${endpoint}`, error.message);
+      throw new Error(error.message || 'Network error - check your connection');
     }
   }
 
-  // 🔑 Authentication APIs
-  static login(username: string, password: string) {
-    return this.request('/auth/login', { method: 'POST', body: { username, password } });
+  // 🔑 Authentication
+  static async login(username: string, password: string) {
+    // Login does not require token
+    const result = await this.request<{ token: string }>('/auth/login', {
+      method: 'POST',
+      body: { username, password },
+    });
+
+    if (result.token) {
+      this.setToken(result.token); // Save token after login
+    }
+    return result;
   }
 
   static register(username: string, email: string, password: string, securityQuestion: string, securityAnswer: string) {
     return this.request('/auth/register', {
       method: 'POST',
-      body: { username, email, password, security_question: securityQuestion, security_answer: securityAnswer }
+      body: { username, email, password, security_question: securityQuestion, security_answer: securityAnswer },
     });
   }
 
-  // ✅ Task APIs
+  // ✅ Tasks
   static getTasks() {
     return this.request('/tasks');
   }
@@ -159,7 +166,7 @@ class APIClient {
     return this.request('/suggested_tasks');
   }
 
-  // 🔐 Password Recovery APIs
+  // 🔐 Password Recovery
   static forgotPassword(username: string) {
     return this.request('/forgot_password', { method: 'POST', body: { username } });
   }
@@ -176,7 +183,7 @@ class APIClient {
     return this.request('/reset_password', { method: 'POST', body: { token, new_password: newPassword } });
   }
 
-  // Import/Export
+  // Markdown Import/Export
   static importMarkdown(markdownContent: string) {
     return this.request('/import_markdown', { method: 'POST', body: { content: markdownContent } });
   }
@@ -185,8 +192,8 @@ class APIClient {
     return this.request('/export_tasks');
   }
 
-  // File Upload
-  static uploadMarkdownFile(file: any) {
+  static async uploadMarkdownFile(file: any) {
+    const token = await this.getToken();
     const formData = new FormData();
     formData.append('file', {
       uri: file.uri,
@@ -197,7 +204,7 @@ class APIClient {
     return fetch(`${API_BASE_URL}/import_markdown`, {
       method: 'POST',
       headers: {
-        ...(this.token && { Authorization: `Bearer ${this.token}` }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: formData,
     });
