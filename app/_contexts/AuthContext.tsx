@@ -23,7 +23,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const token = await AsyncStorage.getItem('token');
       const userData = await AsyncStorage.getItem('user');
-      if (token && userData) setUser(JSON.parse(userData));
+      if (token && userData) {
+        setUser(JSON.parse(userData));
+        APIClient.setToken(token);
+      }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -33,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await APIClient.login(username, password);
       await AsyncStorage.setItem('token', res.token);
       await AsyncStorage.setItem('user', JSON.stringify(res.user));
+      APIClient.setToken(res.token);
       setUser(res.user);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return { success: true };
@@ -47,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await APIClient.register(username, email, password, securityQuestion, securityAnswer);
       await AsyncStorage.setItem('token', res.token);
       await AsyncStorage.setItem('user', JSON.stringify(res.user));
+      APIClient.setToken(res.token);
       setUser(res.user);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return { success: true };
@@ -58,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await AsyncStorage.multiRemove(['token', 'user']);
+    APIClient.clearToken();
     setUser(null);
   };
 
