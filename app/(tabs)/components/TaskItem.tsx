@@ -35,7 +35,6 @@ const TaskItem: React.FC<Props> = ({
     >
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>{task.title}</Text>
-        {task.description ? <Text style={styles.desc}>{task.description}</Text> : null}
         <Text style={[styles.priority, { color: priority.color }]}>
           Priority: {priority.label}
         </Text>

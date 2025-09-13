@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   FlatList,
@@ -47,6 +48,12 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     fetchTasks();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTasks();
+    }, [])
+  );
 
   const handleSave = async (taskData: Partial<Task>) => {
     try {
@@ -103,9 +110,7 @@ const TodoScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleTaskPress = (task: Task) => {
-    if (task.subtask_count && task.subtask_count > 0) {
-      navigation.navigate('SubTaskScreen', { task });
-    }
+    navigation.navigate('SubTaskScreen', { task });
   };
 
   const handleImportComplete = () => {

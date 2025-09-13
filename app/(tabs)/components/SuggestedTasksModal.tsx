@@ -38,7 +38,6 @@ const SuggestedTasksModal: React.FC<Props> = ({ visible, onClose, onTaskSelected
     setError(null);
     try {
       const response = await APIClient.getSuggestedTasks();
-      console.log('Suggested tasks response:', response);
       
       // Convert string array to objects with default priority
       const tasksWithPriority: SuggestedTaskWithPriority[] = (response.suggested_tasks || []).map((taskTitle: string) => ({
