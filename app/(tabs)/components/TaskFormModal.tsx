@@ -12,18 +12,16 @@ interface Props {
 
 const TaskFormModal: React.FC<Props> = ({ visible, onClose, onSave, initialData }) => {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
 
   useEffect(() => {
     setTitle(initialData?.title ?? '');
-    setDescription(initialData?.description ?? '');
     setPriority(initialData?.priority ?? 'medium');
   }, [initialData, visible]);
 
   const handleSave = () => {
     if (!title.trim()) return;
-    onSave({ title, description, priority });
+    onSave({ title, priority });
   };
 
   return (
@@ -38,14 +36,6 @@ const TaskFormModal: React.FC<Props> = ({ visible, onClose, onSave, initialData 
             style={styles.input}
             value={title}
             onChangeText={setTitle}
-          />
-
-          <TextInput
-            placeholder="Description"
-            placeholderTextColor="#999"
-            style={styles.input}
-            value={description}
-            onChangeText={setDescription}
           />
 
           <Picker

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import APIClient, { Task } from '../../_api/APIClient';
 import TaskItem from '../components/TaskItem';
@@ -53,6 +54,12 @@ const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
       headerBackTitle: 'Back'
     });
   }, [navigation, task.title]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchSubtasks();
+    }, [task.id])
+  );
 
   const handleTaskPress = (subtask: Task) => {
     // Always navigate to subtask screen, let it handle loading its own subtasks
