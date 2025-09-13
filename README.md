@@ -1,50 +1,171 @@
-# Welcome to your Expo app 👋
+# TODO App React
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern, cross-platform TODO application built with React Native and Expo. This app helps users manage their daily tasks efficiently across Android, iOS, and web platforms.
 
-## Get started
+## 📱 Features
 
-1. Install dependencies
+- ✅ Add new tasks
+- ✏️ Edit existing tasks
+- 🗑️ Delete completed tasks
+- 📋 Mark tasks as complete/incomplete
+- 💾 Persistent storage
+- 🎨 Clean and intuitive user interface
+- 📱 Cross-platform compatibility (iOS, Android, Web)
 
+## 🛠️ Tech Stack
+
+- **Framework:** React Native with Expo
+- **Language:** JavaScript/TypeScript
+- **Navigation:** Expo Router (file-based routing)
+- **Development Platform:** Expo SDK
+- **Storage:** AsyncStorage (for data persistence)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- [Node.js](https://nodejs.org/) (version 16 or higher)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [Expo CLI](https://docs.expo.dev/get-started/installation/) (optional but recommended)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/ashish-khandelwal01/TODO-App-React.git
+   cd TODO-App-React
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. **Start the development server**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+4. **Run the app**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   After starting the development server, you'll see a QR code and several options:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+    - **On iOS:** Scan the QR code with your iPhone camera or use the Expo Go app
+    - **On Android:** Scan the QR code with the Expo Go app
+    - **On Web:** Press `w` in the terminal to open in your browser
+    - **iOS Simulator:** Press `i` (requires Xcode on macOS)
+    - **Android Emulator:** Press `a` (requires Android Studio)
 
-## Get a fresh project
+## 📁 Project Structure
 
-When you're ready, run:
+```
+TODO-App-React/
+├── app/                    # Main application directory
+│   ├── (tabs)/            # Tab-based navigation screens
+│   ├── _layout.tsx        # Root layout component
+│   └── index.tsx          # Entry point
+├── components/            # Reusable components
+├── constants/            # App constants
+├── hooks/               # Custom React hooks
+├── assets/              # Static assets (images, icons)
+├── app.json            # Expo configuration
+├── package.json        # Dependencies and scripts
+└── README.md          # Project documentation
+```
+
+## 🎯 Usage
+
+1. **Adding a Task**
+    - Tap the "+" button or input field
+    - Enter your task description
+    - Press "Add" or hit Enter
+
+2. **Completing a Task**
+    - Tap the checkbox next to any task
+    - Completed tasks will be marked with a checkmark
+
+3. **Editing a Task**
+    - Tap on the task text to edit
+    - Make your changes and confirm
+
+4. **Deleting a Task**
+    - Swipe left on a task or tap the delete button
+    - Confirm deletion when prompted
+
+## 🔧 Development
+
+### Reset Project
+
+If you want to start with a clean slate:
 
 ```bash
 npm run reset-project
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+This command will move the starter code to the `app-example` directory and create a blank `app` directory for fresh development.
 
-## Learn more
+### Building for Production
 
-To learn more about developing your project with Expo, look at the following resources:
+For iOS:
+```bash
+expo build:ios
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+For Android:
+```bash
+expo build:android
+```
 
-## Join the community
+For Web:
+```bash
+expo build:web
+```
 
-Join our community of developers creating universal apps.
+## 📦 Dependencies
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Key dependencies include:
+
+- `expo` - The Expo platform
+- `react` - React library
+- `react-native` - React Native framework
+- `expo-router` - File-based routing
+- `@expo/vector-icons` - Icon library
+- Additional Expo modules for device features
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## 👨‍💻 Author
+
+**Ashish Khandelwal**
+- GitHub: [@ashish-khandelwal01](https://github.com/ashish-khandelwal01)
+
+## 📚 Learn More
+
+To learn more about the technologies used in this project:
+
+- [Expo Documentation](https://docs.expo.dev/) - Learn about Expo features and API
+- [React Native Documentation](https://reactnative.dev/) - Learn React Native
+- [Expo Router](https://docs.expo.dev/router/introduction/) - File-based routing for Expo
+- [React Documentation](https://react.dev/) - Learn React
+
+## 🐛 Issues
+
+If you encounter any issues or have questions, please [create an issue](https://github.com/ashish-khandelwal01/TODO-App-React/issues) on GitHub.
+
+## ⭐ Support
+
+If you found this project helpful, please give it a ⭐ on GitHub!
