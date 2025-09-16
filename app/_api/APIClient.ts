@@ -145,6 +145,10 @@ class APIClient {
   }
 
   static updateTask(taskId: number, updates: Partial<Task>) {
+    const priorityMap = { low: 1, medium: 2, high: 3 };
+    if (updates.priority && typeof updates.priority === 'string') {
+      updates.priority = priorityMap[updates.priority as 'low' | 'medium' | 'high'];
+    }
     return this.request(`/tasks/${taskId}`, { method: 'PUT', body: updates });
   }
 
