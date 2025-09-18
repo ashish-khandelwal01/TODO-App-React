@@ -12,7 +12,7 @@ interface Props {
 
 const TaskFormModal: React.FC<Props> = ({ visible, onClose, onSave, initialData }) => {
   const [title, setTitle] = useState('');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('low');
 
   useEffect(() => {
     setTitle(initialData?.title ?? '');
