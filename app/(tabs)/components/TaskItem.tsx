@@ -7,8 +7,8 @@ interface Props {
   onDelete: (id: number) => void;
   onUpdate: (task: Task) => void;
   onComplete: (id: number) => void;
-  onPress?: () => void; // for navigation to subtasks
-  showSubtaskCount?: boolean; // whether to show subtask count
+  onPress?: () => void;
+  showSubtaskCount?: boolean;
 }
 
 const TaskItem: React.FC<Props> = ({ 
