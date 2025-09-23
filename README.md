@@ -26,7 +26,7 @@ A modern, cross-platform TODO application built with React Native and Expo. This
 
 Before you begin, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (version 16 or higher)
+- [Node.js](https://nodejs.org/) (version 20.12.2 or higher)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 - [Expo CLI](https://docs.expo.dev/get-started/installation/) (optional but recommended)
 
@@ -62,17 +62,29 @@ Before you begin, ensure you have the following installed:
 
 ```
 TODO-App-React/
-├── app/                    # Main application directory
-│   ├── (tabs)/            # Tab-based navigation screens
-│   ├── _layout.tsx        # Root layout component
-│   └── index.tsx          # Entry point
-├── components/            # Reusable components
-├── constants/            # App constants
-├── hooks/               # Custom React hooks
-├── assets/              # Static assets (images, icons)
-├── app.json            # Expo configuration
-├── package.json        # Dependencies and scripts
-└── README.md          # Project documentation
+├── app/                      # Main application directory
+│   ├── (tabs)/               # Tab-based navigation screens and components
+│   │   ├── components/       # Tab-specific components
+│   │   └── screens/          # Tab-specific screens
+│   ├── _api/                 # API client and related logic
+│   ├── _contexts/            # React context providers (e.g., AuthContext)
+│   ├── _layout.tsx           # Root layout component
+│   ├── +not-found.tsx        # Not found screen
+│   └── index.tsx             # Entry point
+├── components/               # Reusable components (UI, etc.)
+│   └── ui/                   # UI-specific components
+├── constants/                # App constants (e.g., Colors)
+├── hooks/                    # Custom React hooks
+├── assets/                   # Static assets (images, fonts)
+│   ├── fonts/
+│   └── images/
+├── scripts/                  # Utility scripts (e.g., reset-project.js)
+├── app.json                  # Expo configuration
+├── package.json              # Dependencies and scripts
+├── tsconfig.json             # TypeScript configuration
+├── eslint.config.js          # ESLint configuration
+├── README.md                 # Project documentation
+└── ...                       # Other config files
 ```
 
 ## 🎯 Usage
@@ -110,17 +122,17 @@ This command will move the starter code to the `app-example` directory and creat
 
 For iOS:
 ```bash
-expo build:ios
+eas build -p ios
 ```
 
 For Android:
 ```bash
-expo build:android
+eas build -p android
 ```
 
 For Web:
 ```bash
-expo build:web
+eas build -p web
 ```
 
 ## 📦 Dependencies
@@ -132,6 +144,7 @@ Key dependencies include:
 - `react-native` - React Native framework
 - `expo-router` - File-based routing
 - `@expo/vector-icons` - Icon library
+- `@react-native-async-storage/async-storage` - Persistent storage
 - Additional Expo modules for device features
 
 ## 🤝 Contributing
