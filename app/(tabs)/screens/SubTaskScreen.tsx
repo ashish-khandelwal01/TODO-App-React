@@ -97,16 +97,9 @@ const SubTaskScreen: React.FC<Props> = ({ route, navigation }) => {
         await APIClient.updateTask(editingTask.id, taskData);
       } else if (isAddingSubtask) {
         // Creating new subtask
-        const priorityMap: Record<number, 'low' | 'medium' | 'high'> = {
-          1: 'low',
-          2: 'medium',
-          3: 'high'
-        };
-        const stringPriority = priorityMap[taskData.priority as number] || 'low';
-        
         await APIClient.createTask(
           taskData.title!,
-          stringPriority,
+          taskData.priority as 'low' | 'medium' | 'high',
           task.id, // parent_task_id is the current task
           (task.depth || 0) + 1 // increment depth
         );
